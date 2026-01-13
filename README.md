@@ -1,5 +1,7 @@
 # expect
 
+[![Build Status](https://github.com/lumertzg/expect/actions/workflows/ci.yml/badge.svg)](https://github.com/lumertzg/expect/actions/workflows/ci.yml) [![Go Reference](https://pkg.go.dev/badge/github.com/lumertzg/expect.svg)](https://pkg.go.dev/github.com/lumertzg/expect) [![Go Report Card](https://goreportcard.com/badge/github.com/lumertzg/expect)](https://goreportcard.com/report/github.com/lumertzg/expect)
+
 An assertion library to simplify writing tests in Go.
 
 ## Features
