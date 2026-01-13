@@ -18,6 +18,15 @@ func TestNotEqual(t *testing.T) {
 	expect.NotEqual(t, "hello", "world")
 }
 
+func TestComparisons(t *testing.T) {
+	expect.Less(t, 1, 2)
+	expect.LessOrEqual(t, 1, 2)
+	expect.LessOrEqual(t, 2, 2)
+	expect.Greater(t, 2, 1)
+	expect.GreaterOrEqual(t, 2, 1)
+	expect.GreaterOrEqual(t, 2, 2)
+}
+
 func TestBooleans(t *testing.T) {
 	expect.True(t, 10 > 5)
 	expect.False(t, 10 < 5)

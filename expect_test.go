@@ -51,6 +51,94 @@ func TestNotEqual(t *testing.T) {
 	})
 }
 
+func TestLess(t *testing.T) {
+	t.Run("pass", func(t *testing.T) {
+		m := &mockT{}
+		Less(m, 1, 2)
+		if m.failed {
+			t.Error("expected pass")
+		}
+	})
+
+	t.Run("fail", func(t *testing.T) {
+		m := &mockT{}
+		Less(m, 2, 1)
+		if !m.failed {
+			t.Error("expected fail")
+		}
+	})
+}
+
+func TestLessOrEqual(t *testing.T) {
+	t.Run("pass less", func(t *testing.T) {
+		m := &mockT{}
+		LessOrEqual(m, 1, 2)
+		if m.failed {
+			t.Error("expected pass")
+		}
+	})
+
+	t.Run("pass equal", func(t *testing.T) {
+		m := &mockT{}
+		LessOrEqual(m, 2, 2)
+		if m.failed {
+			t.Error("expected pass")
+		}
+	})
+
+	t.Run("fail", func(t *testing.T) {
+		m := &mockT{}
+		LessOrEqual(m, 3, 2)
+		if !m.failed {
+			t.Error("expected fail")
+		}
+	})
+}
+
+func TestGreater(t *testing.T) {
+	t.Run("pass", func(t *testing.T) {
+		m := &mockT{}
+		Greater(m, 2, 1)
+		if m.failed {
+			t.Error("expected pass")
+		}
+	})
+
+	t.Run("fail", func(t *testing.T) {
+		m := &mockT{}
+		Greater(m, 1, 2)
+		if !m.failed {
+			t.Error("expected fail")
+		}
+	})
+}
+
+func TestGreaterOrEqual(t *testing.T) {
+	t.Run("pass greater", func(t *testing.T) {
+		m := &mockT{}
+		GreaterOrEqual(m, 2, 1)
+		if m.failed {
+			t.Error("expected pass")
+		}
+	})
+
+	t.Run("pass equal", func(t *testing.T) {
+		m := &mockT{}
+		GreaterOrEqual(m, 2, 2)
+		if m.failed {
+			t.Error("expected pass")
+		}
+	})
+
+	t.Run("fail", func(t *testing.T) {
+		m := &mockT{}
+		GreaterOrEqual(m, 1, 2)
+		if !m.failed {
+			t.Error("expected fail")
+		}
+	})
+}
+
 func TestTrue(t *testing.T) {
 	t.Run("pass", func(t *testing.T) {
 		m := &mockT{}

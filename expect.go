@@ -2,6 +2,7 @@
 package expect
 
 import (
+	"cmp"
 	"maps"
 	"slices"
 )
@@ -25,6 +26,38 @@ func NotEqual[V comparable](t T, unexpected, actual V) {
 	t.Helper()
 	if unexpected == actual {
 		failMatch(t, actual)
+	}
+}
+
+// Less asserts that a < b.
+func Less[V cmp.Ordered](t T, a, b V) {
+	t.Helper()
+	if a >= b {
+		failCompare(t, a, "<", b)
+	}
+}
+
+// LessOrEqual asserts that a <= b.
+func LessOrEqual[V cmp.Ordered](t T, a, b V) {
+	t.Helper()
+	if a > b {
+		failCompare(t, a, "<=", b)
+	}
+}
+
+// Greater asserts that a > b.
+func Greater[V cmp.Ordered](t T, a, b V) {
+	t.Helper()
+	if a <= b {
+		failCompare(t, a, ">", b)
+	}
+}
+
+// GreaterOrEqual asserts that a >= b.
+func GreaterOrEqual[V cmp.Ordered](t T, a, b V) {
+	t.Helper()
+	if a < b {
+		failCompare(t, a, ">=", b)
 	}
 }
 
@@ -116,4 +149,9 @@ func failMismatch(t T, expected, actual any) {
 func failMatch(t T, value any) {
 	t.Helper()
 	t.Errorf("expected different values, got equal: %v", value)
+}
+
+func failCompare(t T, a any, op string, b any) {
+	t.Helper()
+	t.Errorf("expected %v %s %v", a, op, b)
 }
