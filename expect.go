@@ -110,7 +110,7 @@ func NoError(t T, err error) {
 }
 
 // EqualSlice asserts that expected and actual slices are equal.
-func EqualSlice[V comparable](t T, expected, actual []V) {
+func EqualSlice[S ~[]E, E comparable](t T, expected, actual S) {
 	t.Helper()
 	if !slices.Equal(expected, actual) {
 		failMismatch(t, expected, actual)
@@ -118,7 +118,7 @@ func EqualSlice[V comparable](t T, expected, actual []V) {
 }
 
 // NotEqualSlice asserts that unexpected and actual slices are not equal.
-func NotEqualSlice[V comparable](t T, unexpected, actual []V) {
+func NotEqualSlice[S ~[]E, E comparable](t T, unexpected, actual S) {
 	t.Helper()
 	if slices.Equal(unexpected, actual) {
 		failMatch(t, actual)
@@ -126,7 +126,7 @@ func NotEqualSlice[V comparable](t T, unexpected, actual []V) {
 }
 
 // EqualMap asserts that expected and actual maps are equal.
-func EqualMap[K, V comparable](t T, expected, actual map[K]V) {
+func EqualMap[M ~map[K]V, K, V comparable](t T, expected, actual M) {
 	t.Helper()
 	if !maps.Equal(expected, actual) {
 		failMismatch(t, expected, actual)
@@ -134,7 +134,7 @@ func EqualMap[K, V comparable](t T, expected, actual map[K]V) {
 }
 
 // NotEqualMap asserts that unexpected and actual maps are not equal.
-func NotEqualMap[K, V comparable](t T, unexpected, actual map[K]V) {
+func NotEqualMap[M ~map[K]V, K, V comparable](t T, unexpected, actual M) {
 	t.Helper()
 	if maps.Equal(unexpected, actual) {
 		failMatch(t, actual)
