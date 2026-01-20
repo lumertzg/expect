@@ -4,6 +4,7 @@ package expect
 import (
 	"cmp"
 	"maps"
+	"reflect"
 	"slices"
 )
 
@@ -80,7 +81,7 @@ func False(t T, value bool) {
 // Nil asserts that value is nil.
 func Nil(t T, value any) {
 	t.Helper()
-	if value != nil {
+	if !isNil(value) {
 		failMismatch(t, nil, value)
 	}
 }
@@ -88,9 +89,24 @@ func Nil(t T, value any) {
 // NotNil asserts that value is not nil.
 func NotNil(t T, value any) {
 	t.Helper()
-	if value == nil {
+	if isNil(value) {
 		failMatch(t, value)
 	}
+}
+
+// isNil checks if a value is nil, handling typed nil pointers correctly.
+// In Go, a typed nil pointer like (*T)(nil) wrapped in an interface is not
+// equal to nil because the interface contains type information.
+func isNil(value any) bool {
+	if value == nil {
+		return true
+	}
+	v := reflect.ValueOf(value)
+	switch v.Kind() {
+	case reflect.Ptr, reflect.Interface, reflect.Slice, reflect.Map, reflect.Chan, reflect.Func:
+		return v.IsNil()
+	}
+	return false
 }
 
 // Error asserts that err is not nil.
