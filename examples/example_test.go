@@ -2,6 +2,7 @@ package examples
 
 import (
 	"errors"
+	"fmt"
 	"testing"
 
 	"github.com/lumertzg/expect"
@@ -40,18 +41,44 @@ func TestNil(t *testing.T) {
 }
 
 func TestErrors(t *testing.T) {
+	baseErr := errors.New("something went wrong")
+	wrappedErr := fmt.Errorf("request failed: %w", baseErr)
+	var targetErr *customErr
+
 	expect.Error(t, errors.New("something went wrong"))
 	expect.NoError(t, nil)
+	expect.ErrorIs(t, wrappedErr, baseErr)
+	expect.NotErrorIs(t, errors.New("other"), baseErr)
+	expect.ErrorAs(t, fmt.Errorf("wrapped custom: %w", &customErr{}), &targetErr)
 }
 
 func TestSlices(t *testing.T) {
 	expect.EqualSlice(t, []int{1, 2, 3}, []int{1, 2, 3})
 	expect.NotEqualSlice(t, []int{1, 2, 3}, []int{4, 5, 6})
-
+	expect.ContainsSlice(t, []int{1, 2, 3}, 2)
+	expect.NotContainsSlice(t, []int{1, 2, 3}, 4)
 	expect.EqualSlice(t, []string{"a", "b"}, []string{"a", "b"})
+}
+
+func TestContainsString(t *testing.T) {
+	expect.ContainsString(t, "hello world", "world")
+	expect.NotContainsString(t, "hello world", "golang")
 }
 
 func TestMaps(t *testing.T) {
 	expect.EqualMap(t, map[string]int{"a": 1, "b": 2}, map[string]int{"a": 1, "b": 2})
 	expect.NotEqualMap(t, map[string]int{"a": 1}, map[string]int{"a": 2})
+	expect.ContainsMapKey(t, map[string]int{"a": 1}, "a")
+}
+
+func TestLengthAndEmpty(t *testing.T) {
+	expect.Len(t, []int{1, 2, 3}, 3)
+	expect.Empty(t, "")
+	expect.NotEmpty(t, "hello")
+}
+
+type customErr struct{}
+
+func (e *customErr) Error() string {
+	return "custom"
 }

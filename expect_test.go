@@ -2,11 +2,18 @@ package expect
 
 import (
 	"errors"
+	"fmt"
 	"testing"
 )
 
 type mockT struct {
 	failed bool
+}
+
+type customError struct{}
+
+func (e *customError) Error() string {
+	return "custom"
 }
 
 func (m *mockT) Helper() {}
@@ -337,6 +344,111 @@ func TestNoError(t *testing.T) {
 	})
 }
 
+func TestErrorIs(t *testing.T) {
+	target := errors.New("target")
+
+	t.Run("pass direct match", func(t *testing.T) {
+		m := &mockT{}
+		ErrorIs(m, target, target)
+		if m.failed {
+			t.Error("expected pass")
+		}
+	})
+
+	t.Run("pass wrapped match", func(t *testing.T) {
+		m := &mockT{}
+		err := fmt.Errorf("wrapped: %w", target)
+		ErrorIs(m, err, target)
+		if m.failed {
+			t.Error("expected pass")
+		}
+	})
+
+	t.Run("fail", func(t *testing.T) {
+		m := &mockT{}
+		ErrorIs(m, errors.New("different"), target)
+		if !m.failed {
+			t.Error("expected fail")
+		}
+	})
+}
+
+func TestNotErrorIs(t *testing.T) {
+	target := errors.New("target")
+
+	t.Run("pass", func(t *testing.T) {
+		m := &mockT{}
+		NotErrorIs(m, errors.New("different"), target)
+		if m.failed {
+			t.Error("expected pass")
+		}
+	})
+
+	t.Run("fail direct match", func(t *testing.T) {
+		m := &mockT{}
+		NotErrorIs(m, target, target)
+		if !m.failed {
+			t.Error("expected fail")
+		}
+	})
+
+	t.Run("fail wrapped match", func(t *testing.T) {
+		m := &mockT{}
+		err := fmt.Errorf("wrapped: %w", target)
+		NotErrorIs(m, err, target)
+		if !m.failed {
+			t.Error("expected fail")
+		}
+	})
+}
+
+func TestErrorAs(t *testing.T) {
+	t.Run("pass", func(t *testing.T) {
+		m := &mockT{}
+		wrapped := fmt.Errorf("wrapped: %w", &customError{})
+		var target *customError
+		ErrorAs(m, wrapped, &target)
+		if m.failed {
+			t.Error("expected pass")
+		}
+	})
+
+	t.Run("fail no match", func(t *testing.T) {
+		m := &mockT{}
+		var target *customError
+		ErrorAs(m, errors.New("different"), &target)
+		if !m.failed {
+			t.Error("expected fail")
+		}
+	})
+
+	t.Run("fail nil target", func(t *testing.T) {
+		m := &mockT{}
+		ErrorAs(m, errors.New("test"), nil)
+		if !m.failed {
+			t.Error("expected fail")
+		}
+	})
+
+	t.Run("fail non-pointer target", func(t *testing.T) {
+		m := &mockT{}
+		var target *customError
+		ErrorAs(m, errors.New("test"), target)
+		if !m.failed {
+			t.Error("expected fail")
+		}
+	})
+
+	t.Run("fail pointer to non-error", func(t *testing.T) {
+		m := &mockT{}
+		value := 1
+		ErrorAs(m, errors.New("test"), &value)
+		if !m.failed {
+			t.Error("expected fail")
+		}
+	})
+}
+
 func TestEqualSlice(t *testing.T) {
 	t.Run("pass", func(t *testing.T) {
 		m := &mockT{}
@@ -373,6 +485,221 @@ func TestNotEqualSlice(t *testing.T) {
 	})
 }
 
+func TestContainsSlice(t *testing.T) {
+	t.Run("pass", func(t *testing.T) {
+		m := &mockT{}
+		ContainsSlice(m, []int{1, 2, 3}, 2)
+		if m.failed {
+			t.Error("expected pass")
+		}
+	})
+
+	t.Run("fail", func(t *testing.T) {
+		m := &mockT{}
+		ContainsSlice(m, []int{1, 2, 3}, 4)
+		if !m.failed {
+			t.Error("expected fail")
+		}
+	})
+}
+
+func TestNotContainsSlice(t *testing.T) {
+	t.Run("pass", func(t *testing.T) {
+		m := &mockT{}
+		NotContainsSlice(m, []int{1, 2, 3}, 4)
+		if m.failed {
+			t.Error("expected pass")
+		}
+	})
+
+	t.Run("fail", func(t *testing.T) {
+		m := &mockT{}
+		NotContainsSlice(m, []int{1, 2, 3}, 2)
+		if !m.failed {
+			t.Error("expected fail")
+		}
+	})
+}
+
+func TestContainsString(t *testing.T) {
+	t.Run("pass", func(t *testing.T) {
+		m := &mockT{}
+		ContainsString(m, "hello world", "world")
+		if m.failed {
+			t.Error("expected pass")
+		}
+	})
+
+	t.Run("fail", func(t *testing.T) {
+		m := &mockT{}
+		ContainsString(m, "hello world", "golang")
+		if !m.failed {
+			t.Error("expected fail")
+		}
+	})
+}
+
+func TestNotContainsString(t *testing.T) {
+	t.Run("pass", func(t *testing.T) {
+		m := &mockT{}
+		NotContainsString(m, "hello world", "golang")
+		if m.failed {
+			t.Error("expected pass")
+		}
+	})
+
+	t.Run("fail", func(t *testing.T) {
+		m := &mockT{}
+		NotContainsString(m, "hello world", "world")
+		if !m.failed {
+			t.Error("expected fail")
+		}
+	})
+}
+
+func TestLen(t *testing.T) {
+	t.Run("pass string", func(t *testing.T) {
+		m := &mockT{}
+		Len(m, "abc", 3)
+		if m.failed {
+			t.Error("expected pass")
+		}
+	})
+
+	t.Run("pass slice", func(t *testing.T) {
+		m := &mockT{}
+		Len(m, []int{1, 2, 3}, 3)
+		if m.failed {
+			t.Error("expected pass")
+		}
+	})
+
+	t.Run("pass map", func(t *testing.T) {
+		m := &mockT{}
+		Len(m, map[string]int{"a": 1, "b": 2}, 2)
+		if m.failed {
+			t.Error("expected pass")
+		}
+	})
+
+	t.Run("fail mismatch", func(t *testing.T) {
+		m := &mockT{}
+		Len(m, []int{1, 2, 3}, 2)
+		if !m.failed {
+			t.Error("expected fail")
+		}
+	})
+
+	t.Run("fail unsupported", func(t *testing.T) {
+		m := &mockT{}
+		Len(m, 10, 1)
+		if !m.failed {
+			t.Error("expected fail")
+		}
+	})
+}
+
+func TestEmpty(t *testing.T) {
+	t.Run("pass nil", func(t *testing.T) {
+		m := &mockT{}
+		Empty(m, nil)
+		if m.failed {
+			t.Error("expected pass")
+		}
+	})
+
+	t.Run("pass empty string", func(t *testing.T) {
+		m := &mockT{}
+		Empty(m, "")
+		if m.failed {
+			t.Error("expected pass")
+		}
+	})
+
+	t.Run("pass nil slice", func(t *testing.T) {
+		m := &mockT{}
+		var values []int
+		Empty(m, values)
+		if m.failed {
+			t.Error("expected pass")
+		}
+	})
+
+	t.Run("pass empty map", func(t *testing.T) {
+		m := &mockT{}
+		Empty(m, map[string]int{})
+		if m.failed {
+			t.Error("expected pass")
+		}
+	})
+
+	t.Run("fail non-empty", func(t *testing.T) {
+		m := &mockT{}
+		Empty(m, "abc")
+		if !m.failed {
+			t.Error("expected fail")
+		}
+	})
+
+	t.Run("fail unsupported", func(t *testing.T) {
+		m := &mockT{}
+		Empty(m, 10)
+		if !m.failed {
+			t.Error("expected fail")
+		}
+	})
+}
+
+func TestNotEmpty(t *testing.T) {
+	t.Run("pass string", func(t *testing.T) {
+		m := &mockT{}
+		NotEmpty(m, "abc")
+		if m.failed {
+			t.Error("expected pass")
+		}
+	})
+
+	t.Run("pass slice", func(t *testing.T) {
+		m := &mockT{}
+		NotEmpty(m, []int{1})
+		if m.failed {
+			t.Error("expected pass")
+		}
+	})
+
+	t.Run("pass map", func(t *testing.T) {
+		m := &mockT{}
+		NotEmpty(m, map[string]int{"a": 1})
+		if m.failed {
+			t.Error("expected pass")
+		}
+	})
+
+	t.Run("fail empty", func(t *testing.T) {
+		m := &mockT{}
+		NotEmpty(m, "")
+		if !m.failed {
+			t.Error("expected fail")
+		}
+	})
+
+	t.Run("fail nil", func(t *testing.T) {
+		m := &mockT{}
+		NotEmpty(m, nil)
+		if !m.failed {
+			t.Error("expected fail")
+		}
+	})
+
+	t.Run("fail unsupported", func(t *testing.T) {
+		m := &mockT{}
+		NotEmpty(m, 10)
+		if !m.failed {
+			t.Error("expected fail")
+		}
+	})
+}
+
 func TestEqualMap(t *testing.T) {
 	t.Run("pass", func(t *testing.T) {
 		m := &mockT{}
@@ -403,6 +730,24 @@ func TestNotEqualMap(t *testing.T) {
 	t.Run("fail", func(t *testing.T) {
 		m := &mockT{}
 		NotEqualMap(m, map[string]int{"a": 1}, map[string]int{"a": 1})
+		if !m.failed {
+			t.Error("expected fail")
+		}
+	})
+}
+
+func TestContainsMapKey(t *testing.T) {
+	t.Run("pass", func(t *testing.T) {
+		m := &mockT{}
+		ContainsMapKey(m, map[string]int{"a": 1}, "a")
+		if m.failed {
+			t.Error("expected pass")
+		}
+	})
+
+	t.Run("fail", func(t *testing.T) {
+		m := &mockT{}
+		ContainsMapKey(m, map[string]int{"a": 1}, "b")
 		if !m.failed {
 			t.Error("expected fail")
 		}

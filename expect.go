@@ -3,10 +3,14 @@ package expect
 
 import (
 	"cmp"
+	"errors"
 	"maps"
 	"reflect"
 	"slices"
+	"strings"
 )
+
+var errorType = reflect.TypeFor[error]()
 
 // T is the interface required for test assertions. Both *testing.T and *testing.B satisfy it.
 type T interface {
@@ -125,6 +129,42 @@ func NoError(t T, err error) {
 	}
 }
 
+// ErrorIs asserts that err matches target using errors.Is.
+func ErrorIs(t T, err, target error) {
+	t.Helper()
+	if !errors.Is(err, target) {
+		t.Errorf("expected error %v to match %v", err, target)
+	}
+}
+
+// NotErrorIs asserts that err does not match target using errors.Is.
+func NotErrorIs(t T, err, target error) {
+	t.Helper()
+	if errors.Is(err, target) {
+		t.Errorf("expected error %v not to match %v", err, target)
+	}
+}
+
+// ErrorAs asserts that err matches target using errors.As.
+func ErrorAs(t T, err error, target any) {
+	t.Helper()
+	v := reflect.ValueOf(target)
+	if target == nil || v.Kind() != reflect.Pointer || v.IsNil() {
+		t.Errorf("expected target to be a non-nil pointer, got %T", target)
+		return
+	}
+
+	typeToMatch := v.Elem().Type()
+	if !typeToMatch.Implements(errorType) && typeToMatch.Kind() != reflect.Interface {
+		t.Errorf("expected target to point to an error or interface type, got %T", target)
+		return
+	}
+
+	if !errors.As(err, target) {
+		t.Errorf("expected error %v to match target type %v", err, typeToMatch)
+	}
+}
+
 // EqualSlice asserts that expected and actual slices are equal.
 func EqualSlice[S ~[]E, E comparable](t T, expected, actual S) {
 	t.Helper()
@@ -141,6 +181,88 @@ func NotEqualSlice[S ~[]E, E comparable](t T, unexpected, actual S) {
 	}
 }
 
+// ContainsSlice asserts that values contains item.
+func ContainsSlice[S ~[]E, E comparable](t T, values S, item E) {
+	t.Helper()
+	if !slices.Contains(values, item) {
+		t.Errorf("expected %v to contain %v", values, item)
+	}
+}
+
+// NotContainsSlice asserts that values does not contain item.
+func NotContainsSlice[S ~[]E, E comparable](t T, values S, item E) {
+	t.Helper()
+	if slices.Contains(values, item) {
+		t.Errorf("expected %v not to contain %v", values, item)
+	}
+}
+
+// ContainsString asserts that s contains substr.
+func ContainsString(t T, s, substr string) {
+	t.Helper()
+	if !strings.Contains(s, substr) {
+		t.Errorf("expected %q to contain %q", s, substr)
+	}
+}
+
+// NotContainsString asserts that s does not contain substr.
+func NotContainsString(t T, s, substr string) {
+	t.Helper()
+	if strings.Contains(s, substr) {
+		t.Errorf("expected %q not to contain %q", s, substr)
+	}
+}
+
+// Len asserts that value has the expected length.
+func Len(t T, value any, expected int) {
+	t.Helper()
+	actual, ok := valueLen(value)
+	if !ok {
+		t.Errorf("expected value with length, got %T", value)
+		return
+	}
+	if actual != expected {
+		t.Errorf("expected length %d, got %d", expected, actual)
+	}
+}
+
+// Empty asserts that value is empty.
+func Empty(t T, value any) {
+	t.Helper()
+	if isNil(value) {
+		return
+	}
+
+	length, ok := valueLen(value)
+	if !ok {
+		t.Errorf("expected empty value, got unsupported type %T", value)
+		return
+	}
+
+	if length != 0 {
+		t.Errorf("expected empty value, got %v", value)
+	}
+}
+
+// NotEmpty asserts that value is not empty.
+func NotEmpty(t T, value any) {
+	t.Helper()
+	if isNil(value) {
+		t.Errorf("expected non-empty value, got %v", value)
+		return
+	}
+
+	length, ok := valueLen(value)
+	if !ok {
+		t.Errorf("expected non-empty value, got unsupported type %T", value)
+		return
+	}
+
+	if length == 0 {
+		t.Errorf("expected non-empty value, got %v", value)
+	}
+}
+
 // EqualMap asserts that expected and actual maps are equal.
 func EqualMap[M ~map[K]V, K, V comparable](t T, expected, actual M) {
 	t.Helper()
@@ -154,6 +276,24 @@ func NotEqualMap[M ~map[K]V, K, V comparable](t T, unexpected, actual M) {
 	t.Helper()
 	if maps.Equal(unexpected, actual) {
 		failMatch(t, actual)
+	}
+}
+
+// ContainsMapKey asserts that m contains key.
+func ContainsMapKey[M ~map[K]V, K comparable, V any](t T, m M, key K) {
+	t.Helper()
+	if _, ok := m[key]; !ok {
+		t.Errorf("expected map %v to contain key %v", m, key)
+	}
+}
+
+func valueLen(value any) (int, bool) {
+	v := reflect.ValueOf(value)
+	switch v.Kind() {
+	case reflect.Array, reflect.Chan, reflect.Map, reflect.Slice, reflect.String:
+		return v.Len(), true
+	default:
+		return 0, false
 	}
 }
 
