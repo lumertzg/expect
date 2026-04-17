@@ -86,7 +86,7 @@ func False(t T, value bool) {
 func Nil(t T, value any) {
 	t.Helper()
 	if !isNil(value) {
-		failMismatch(t, nil, value)
+		t.Errorf("expected nil, got %v (%T)", value, value)
 	}
 }
 
@@ -94,7 +94,7 @@ func Nil(t T, value any) {
 func NotNil(t T, value any) {
 	t.Helper()
 	if isNil(value) {
-		failMatch(t, value)
+		t.Errorf("expected non-nil value, got nil (%T)", value)
 	}
 }
 
@@ -107,7 +107,7 @@ func isNil(value any) bool {
 	}
 	v := reflect.ValueOf(value)
 	switch v.Kind() {
-	case reflect.Pointer, reflect.Interface, reflect.Slice, reflect.Map, reflect.Chan, reflect.Func:
+	case reflect.Pointer, reflect.Slice, reflect.Map, reflect.Chan, reflect.Func:
 		return v.IsNil()
 	}
 	return false
@@ -117,7 +117,7 @@ func isNil(value any) bool {
 func Error(t T, err error) {
 	t.Helper()
 	if err == nil {
-		failMismatch(t, "error", nil)
+		t.Errorf("expected an error, got nil")
 	}
 }
 
@@ -125,7 +125,7 @@ func Error(t T, err error) {
 func NoError(t T, err error) {
 	t.Helper()
 	if err != nil {
-		failMismatch(t, nil, err)
+		t.Errorf("expected no error, got %v", err)
 	}
 }
 
@@ -284,6 +284,14 @@ func ContainsMapKey[M ~map[K]V, K comparable, V any](t T, m M, key K) {
 	t.Helper()
 	if _, ok := m[key]; !ok {
 		t.Errorf("expected map %v to contain key %v", m, key)
+	}
+}
+
+// NotContainsMapKey asserts that m does not contain key.
+func NotContainsMapKey[M ~map[K]V, K comparable, V any](t T, m M, key K) {
+	t.Helper()
+	if _, ok := m[key]; ok {
+		t.Errorf("expected map %v not to contain key %v", m, key)
 	}
 }
 

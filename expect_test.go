@@ -753,3 +753,21 @@ func TestContainsMapKey(t *testing.T) {
 		}
 	})
 }
+
+func TestNotContainsMapKey(t *testing.T) {
+	t.Run("pass", func(t *testing.T) {
+		m := &mockT{}
+		NotContainsMapKey(m, map[string]int{"a": 1}, "b")
+		if m.failed {
+			t.Error("expected pass")
+		}
+	})
+
+	t.Run("fail", func(t *testing.T) {
+		m := &mockT{}
+		NotContainsMapKey(m, map[string]int{"a": 1}, "a")
+		if !m.failed {
+			t.Error("expected fail")
+		}
+	})
+}

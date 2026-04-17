@@ -69,6 +69,7 @@ func TestMaps(t *testing.T) {
 	expect.EqualMap(t, map[string]int{"a": 1, "b": 2}, map[string]int{"a": 1, "b": 2})
 	expect.NotEqualMap(t, map[string]int{"a": 1}, map[string]int{"a": 2})
 	expect.ContainsMapKey(t, map[string]int{"a": 1}, "a")
+	expect.NotContainsMapKey(t, map[string]int{"a": 1}, "b")
 }
 
 func TestLengthAndEmpty(t *testing.T) {
